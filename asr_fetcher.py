@@ -32,24 +32,24 @@ def main():
     if not device_check(args.device[0]):
         sys.exit(f'[ERROR] Device {args.device[0]} does not exist. Exiting...')
 
-    hdiutil_check = subprocess.run('which hdiutil', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+    hdiutil_check = subprocess.run(('which', 'hdiutil'), stdout=subprocess.PIPE)
     if hdiutil_check.returncode != 0:
         sys.exit('[ERROR] hdiutil binary not found. Exiting...')
 
-    img4lib_check = subprocess.run('which img4', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+    img4lib_check = subprocess.run(('which', 'img4'), stdout=subprocess.PIPE)
     if img4lib_check.returncode == 0:
         img4lib = True
     else:
         img4lib = False
 
-    img4tool_check = subprocess.run('which img4tool', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+    img4tool_check = subprocess.run(('which', 'img4tool'), stdout=subprocess.PIPE)
     if img4tool_check.returncode == 0:
         img4tool = True
     else:
         img4tool = False
 
     if os.path.isdir('.tmp/dl/ramdisk'):
-        subprocess.run('hdiutil detach .tmp/dl/ramdisk', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+        subprocess.run(('hdiutil', 'detach', '.tmp/dl/ramdisk'), stdout=subprocess.PIPE)
 
     if os.path.isdir('.tmp/'):
         shutil.rmtree('.tmp/')
@@ -83,9 +83,9 @@ def main():
                         print(f'Extracting ASR from iOS {data["firmwares"][x]["version"]}\'s IPSW')
 
                         if img4lib:
-                            subprocess.run(f'img4 -i {i.filename} -o {ramdisk_path}', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+                            subprocess.run(('img4', '-i', i.filename, '-o', ramdisk_path), stdout=subprocess.DEVNULL)
                         elif img4tool:
-                            subprocess.run(f'img4tool -e -o {ramdisk_path} {i.filename}', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+                            subprocess.run(('img4tool', '-e', '-o', ramdisk_path, i.filename), stdout=subprocess.DEVNULL)
                         else:
                             sys.exit('[ERROR] Neither img4 or img4tool were found. Exiting...')
 
@@ -95,7 +95,7 @@ def main():
             print(f'[ERROR] Unable to extract ASR from iOS {data["firmwares"][x]["version"]}\'s IPSW, continuing...')
             continue
 
-        attach_dmg = subprocess.run(f'hdiutil attach {ramdisk_path} -mountpoint ramdisk', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+        attach_dmg = subprocess.run(('hdiutil', 'attach', ramdisk_path, '-mountpoint', 'ramdisk'), stdout=subprocess.DEVNULL)
         if attach_dmg.returncode != 0:
             sys.exit(f'[ERROR] Mounting DMG failed.')
 
@@ -106,7 +106,7 @@ def main():
 
         shutil.move('ramdisk/usr/sbin/asr', f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}')
 
-        subprocess.run('hdiutil detach ramdisk', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+        subprocess.run(('hdiutil', 'detach', 'ramdisk'), stdout=subprocess.DEVNULL)
         os.remove(f'ramdisk_{device_identifier}_{data["firmwares"][x]["version"]}_{data["firmwares"][x]["buildid"]}.dmg')
 
     print('Done!')

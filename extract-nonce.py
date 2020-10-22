@@ -24,7 +24,7 @@ if not args.shsh:
 if not os.path.isfile(args.shsh[0]):
     sys.exit(f'[ERROR] SHSH not found at given path: {args.shsh[0]}. Exiting...')
 
-img4tool = subprocess.run(f'{img4tool} -e -s {args.shsh[0]} -m IM4M.tmp', stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+img4tool = subprocess.run((img4tool, '-e', '-s', args.shsh[0], '-m', 'IM4M.tmp'), stdout=subprocess.PIPE)
 if not 'Saved IM4M to IM4M.tmp' in img4tool.stdout:
     sys.exit('[ERROR] Failed to extract IM4M from SHSH. Exiting...')
 
