@@ -9,6 +9,7 @@ A repository with scripts that can be helpful for jailbreaking.
 
 ## `extract-nonce.py`
 - A script to extract an apnonce and sepnonce from an SHSH blob.
+
 | Option (short) | Option (long) | Description |
 |----------------|---------------|-------------|
 | `-h` | `--help` | Shows all options avaiable |
