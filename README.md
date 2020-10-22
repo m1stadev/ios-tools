@@ -3,7 +3,7 @@ A repository with scripts that can be helpful for jailbreaking.
 
 ## Requirements
 - Python 3
-- A macOS or Linux computer
+- A macOS or Linux computer (although not all scripts support Linux)
 - Required libraries:
     - `pip3 install -r requirements.txt`
 
@@ -14,3 +14,12 @@ A repository with scripts that can be helpful for jailbreaking.
 |----------------|---------------|-------------|
 | `-h` | `--help` | Shows all options avaiable |
 | `-s` | `--shsh SHSH` | Path to SHSH |
+
+## `asr-fetcher.py`
+- A script (macOS only) to extract ASR binaries from each iOS version's IPSW for an iOS device.
+
+| Option (short) | Option (long) | Description |
+|----------------|---------------|-------------|
+| `-h` | `--help` | Shows all options avaiable |
+| `-d` | `--device DEVICE` | Device identifier (ex. iPhone9,3) |
+| `-i` | `--version VERSION` | Fetch ASR binaries for one major iOS version (ex. 13) |
