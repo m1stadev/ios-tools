@@ -32,24 +32,24 @@ def main():
     if not device_check(args.device[0]):
         sys.exit(f'[ERROR] Device {args.device[0]} does not exist. Exiting...')
 
-    hdiutil_check = subprocess.run(('which', 'hdiutil'), stdout=subprocess.PIPE)
+    hdiutil_check = subprocess.run(('which', 'hdiutil'), stdout=subprocess.DEVNULL)
     if hdiutil_check.returncode != 0:
         sys.exit('[ERROR] hdiutil binary not found. Exiting...')
 
-    img4lib_check = subprocess.run(('which', 'img4'), stdout=subprocess.PIPE)
+    img4lib_check = subprocess.run(('which', 'img4'), stdout=subprocess.DEVNULL)
     if img4lib_check.returncode == 0:
         img4lib = True
     else:
         img4lib = False
 
-    img4tool_check = subprocess.run(('which', 'img4tool'), stdout=subprocess.PIPE)
+    img4tool_check = subprocess.run(('which', 'img4tool'), stdout=subprocess.DEVNULL)
     if img4tool_check.returncode == 0:
         img4tool = True
     else:
         img4tool = False
 
     if os.path.isdir('.tmp/dl/ramdisk'):
-        subprocess.run(('hdiutil', 'detach', '.tmp/dl/ramdisk'), stdout=subprocess.PIPE)
+        subprocess.run(('hdiutil', 'detach', '.tmp/dl/ramdisk'), stdout=subprocess.DEVNULL)
 
     if os.path.isdir('.tmp/'):
         shutil.rmtree('.tmp/')
