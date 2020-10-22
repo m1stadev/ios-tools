@@ -18,6 +18,9 @@ parser = argparse.ArgumentParser(description='Extract ApNonce & SepNonce from SH
 parser.add_argument('-s', '--shsh', help='Path to SHSH', nargs=1)
 args = parser.parse_args()
 
+if not args.shsh:
+    sys.exit(parser.print_help(sys.stderr))
+
 if not os.path.isfile(args.shsh[0]):
     sys.exit(f'[ERROR] SHSH not found at given path: {args.shsh[0]}. Exiting...')
 
