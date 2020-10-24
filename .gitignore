@@ -1,1 +1,3 @@
 *.tmp
+ASR_Binaries/
+.tmp/
