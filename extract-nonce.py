@@ -32,10 +32,10 @@ def main():
         os.makedirs('.tmp')
 
     img4tool = subprocess.run((img4tool_binary, '-e', '-s', args.shsh[0], '-m', '.tmp/IM4M'), stdout=subprocess.PIPE, universal_newlines=True)
-    if not 'Saved IM4M to IM4M.tmp' in img4tool.stdout:
+    if not 'Saved IM4M to .tmp/IM4M' in img4tool.stdout:
         sys.exit('[ERROR] Failed to extract IM4M from SHSH. Exiting...')
 
-    with open('IM4M.tmp', 'rb') as f:
+    with open('.tmp/IM4M', 'rb') as f:
         IM4M = binascii.hexlify(f.read())
 
     ApNonce = IM4M[160:224].decode('utf-8')
