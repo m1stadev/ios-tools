@@ -14,7 +14,7 @@ elif platform.system() == 'Linux':
     dpkg_admindir = '/var/lib/dpkg'
 
 def main():
-    parser = argparse.ArgumentParser(description='ASR Fetcher', usage="./redeb.py -p 'package'")
+    parser = argparse.ArgumentParser(description='ReDEB', usage="./redeb.py -p 'package'")
     parser.add_argument('-p', '--package', help='Name of installed package', nargs=1)
     args = parser.parse_args()
 
