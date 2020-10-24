@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import atexit
 import argparse
 import os
 import platform
@@ -12,6 +13,12 @@ import sys
 if not platform.system() == 'Darwin':
     sys.exit('[ERROR] Unsupported OS. Exiting...')
 
+def cleanup():
+    if os.path.isdir('.tmp/asr-fetcher/ramdisk'):
+        subprocess.run(('hdiutil', 'detach', '.tmp/asr-fetcher/ramdisk'), stdout=subprocess.DEVNULL)
+    elif os.path.isdir('.tmp'):
+        shutil.rmtree('.tmp')
+
 def device_check(device):
     api = requests.get('https://api.ipsw.me/v2.1/firmwares.json/condensed')
     data = api.json()
@@ -19,6 +26,8 @@ def device_check(device):
         return True
 
     return False
+
+atexit.register(cleanup)
 
 def main():
     parser = argparse.ArgumentParser(description='ASR Fetcher', usage="./asr_fetcher.py -d 'device' [-i 'version']")
@@ -34,7 +43,7 @@ def main():
 
     hdiutil_check = subprocess.run(('which', 'hdiutil'), stdout=subprocess.DEVNULL)
     if hdiutil_check.returncode != 0:
-        sys.exit('[ERROR] hdiutil binary not found. Exiting...')
+        sys.exit("[ERROR] hdiutil binary not found. Something is very wrong (unless you're running this on an iOS device). Exiting...")
 
     img4lib_check = subprocess.run(('which', 'img4'), stdout=subprocess.DEVNULL)
     if img4lib_check.returncode == 0:
@@ -48,14 +57,10 @@ def main():
     else:
         img4tool = False
 
-    if os.path.isdir('.tmp/dl/ramdisk'):
-        subprocess.run(('hdiutil', 'detach', '.tmp/dl/ramdisk'), stdout=subprocess.DEVNULL)
+    cleanup()
 
-    if os.path.isdir('.tmp/'):
-        shutil.rmtree('.tmp/')
-
-    os.makedirs('.tmp/dl')
-    os.chdir('.tmp/dl')
+    os.makedirs('.tmp/asr-fetcher')
+    os.chdir('.tmp/asr-fetcher')
 
     api = requests.get(f'https://api.ipsw.me/v4/device/{args.device[0]}?type=ipsw')
     data = api.json()
@@ -77,34 +82,34 @@ def main():
                 
                 dmg_sizes.sort()
                 for i in f.infolist():
-                    if i.file_size == dmg_sizes[0]:
-                        f.extract(i.filename)
+                    if not i.file_size == dmg_sizes[0]:
+                        continue
 
-                        print(f'Extracting ASR from iOS {data["firmwares"][x]["version"]}\'s IPSW')
+                    print(f"Extracting ASR from iOS {data['firmwares'][x]['version']}'s IPSW")
 
-                        if img4lib:
-                            subprocess.run(('img4', '-i', i.filename, '-o', ramdisk_path), stdout=subprocess.DEVNULL)
-                        elif img4tool:
-                            subprocess.run(('img4tool', '-e', '-o', ramdisk_path, i.filename), stdout=subprocess.DEVNULL)
-                        else:
-                            sys.exit('[ERROR] Neither img4 or img4tool were found. Exiting...')
+                    f.extract(i.filename)
 
-                        os.remove(i.filename)
-                        break
+                    if img4lib:
+                        subprocess.run(('img4', '-i', i.filename, '-o', ramdisk_path), stdout=subprocess.DEVNULL)
+                    elif img4tool:
+                        subprocess.run(('img4tool', '-e', '-o', ramdisk_path, i.filename), stdout=subprocess.DEVNULL)
+                    else:
+                        sys.exit('[ERROR] Neither img4 or img4tool were found. Exiting...')
+
+                    os.remove(i.filename)
+                    break
+
         except remotezip.RemoteIOError:
-            print(f'[ERROR] Unable to extract ASR from iOS {data["firmwares"][x]["version"]}\'s IPSW, continuing...')
+            print(f"[ERROR] Unable to extract ASR from iOS {data['firmwares'][x]['version']}'s IPSW, continuing...")
             continue
 
         attach_dmg = subprocess.run(('hdiutil', 'attach', ramdisk_path, '-mountpoint', 'ramdisk'), stdout=subprocess.DEVNULL)
         if attach_dmg.returncode != 0:
             sys.exit(f'[ERROR] Mounting DMG failed.')
 
-        os.makedirs(f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}', exist_ok=True)
+        os.makedirs(f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}')
 
-        if os.path.isfile(f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}/asr'):
-            os.remove(f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}/asr')
-
-        shutil.move('ramdisk/usr/sbin/asr', f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}')
+        shutil.move('ramdisk/usr/sbin/asr', f'../../ASR_Binaries/{device_identifier}/{data["firmwares"][x]["version"]}/{data["firmwares"][x]["buildid"]}/asr')
 
         subprocess.run(('hdiutil', 'detach', 'ramdisk'), stdout=subprocess.DEVNULL)
         os.remove(f'ramdisk_{device_identifier}_{data["firmwares"][x]["version"]}_{data["firmwares"][x]["buildid"]}.dmg')

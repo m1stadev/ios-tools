@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import atexit
 import argparse
 import os
 import platform
@@ -12,6 +13,12 @@ if platform.system() == 'Darwin' and platform.processor() == 'arm64' or platform
 
 elif platform.system() == 'Linux':
     dpkg_admindir = '/var/lib/dpkg'
+
+def cleanup():
+    if os.path.isdir('.tmp'): # Cleanup files from previous run if they exist
+        shutil.rmtree('.tmp')    
+
+atexit.register(cleanup)
 
 def main():
     parser = argparse.ArgumentParser(description='ReDEB', usage="./redeb.py -p 'package'")
@@ -34,10 +41,7 @@ def main():
     if not os.path.isfile(f'{dpkg_admindir}/info/{package}.list'):
         sys.exit(f'[ERROR] Package {package} is not installed or does not exist. Exiting...')
 
-
-    if os.path.isdir(f'.tmp/dpkg/{package}'): # Cleanup files from previous run if they exist
-        shutil.rmtree(f'.tmp/dpkg/{package}')
-    elif os.path.isfile(f'{package}.deb'):
+    if os.path.isfile(f'{package}.deb'):
         os.remove(f'{package}.deb')
 
     os.makedirs(f'.tmp/dpkg/{package}/DEBIAN')
@@ -105,7 +109,7 @@ def main():
 
     print(f'Package successfully rebuilt to deb: {package}.deb')  
 
-    shutil.rmtree(f'.tmp/dpkg/{package}')     
+    shutil.rmtree(f'.tmp')     
 
 if __name__ == '__main__':
     main()

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import atexit
 import argparse
 import binascii
 import os
 import platform
+import shutil
 import subprocess
 import sys
 
@@ -13,6 +15,12 @@ elif platform.system() == 'Darwin':
     img4tool_binary = './resources/bin/img4tool_macos'
 else:
     sys.exit('[ERROR] Unsupported OS. Exiting...')
+
+def cleanup():
+    if os.path.isdir('.tmp'):
+        shutil.rmtree('.tmp')
+
+atexit.register(cleanup)
 
 def main():
     parser = argparse.ArgumentParser(description='Extract ApNonce & SepNonce from SHSH')
@@ -25,11 +33,9 @@ def main():
     if not os.path.isfile(args.shsh[0]):
         sys.exit(f'[ERROR] SHSH not found at given path: {args.shsh[0]}. Exiting...')
 
-    if os.path.isdir('.tmp'):
-        if os.path.isfile('.tmp/IM4M'):
-            os.remove('.tmp/IM4M')
-    else:
-        os.makedirs('.tmp')
+    cleanup()
+
+    os.makedirs('.tmp')
 
     img4tool = subprocess.run((img4tool_binary, '-e', '-s', args.shsh[0], '-m', '.tmp/IM4M'), stdout=subprocess.PIPE, universal_newlines=True)
     if not 'Saved IM4M to .tmp/IM4M' in img4tool.stdout:
@@ -44,7 +50,7 @@ def main():
     print(f'ApNonce: {ApNonce}')
     print(f'SepNonce: {SepNonce}')
 
-    os.remove('.tmp/IM4M')
+    shutil.rmtree('.tmp')
 
 if __name__ == '__main__':
     main()
