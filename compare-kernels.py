@@ -8,7 +8,7 @@ import os
 import sys
 
 def main():
-	parser = argparse.ArgumentParser(description="compareFiles.py - A script to create a diff file between 2 extracted kernelcaches that img4lib can utilize.", usage="./compareFiles.py -i kcache.raw -o kcache.patched -d kc.bpatch")
+	parser = argparse.ArgumentParser(description="compare-kernels.py - A script to create a diff file between 2 raw kernelcaches that img4lib can utilize.", usage="./compareFiles.py -i kcache.raw -o kcache.patched -d kc.bpatch")
 	parser.add_argument('-i', '--input', help='Input kernelcache', nargs=1)
 	parser.add_argument('-p', '--patched', help='Patched kernelcache', nargs=1)
 	parser.add_argument('-d', '--diff', help='Diff file to write to', nargs=1)

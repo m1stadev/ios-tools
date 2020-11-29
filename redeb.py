@@ -18,6 +18,9 @@ def cleanup():
     if os.path.isdir('.tmp'): # Cleanup files from previous run if they exist
         shutil.rmtree('.tmp')    
 
+if os.geteuid() != 0:
+    sys.exit('[ERROR] This script must be ran as root. Exiting...')
+
 atexit.register(cleanup)
 
 def main():
@@ -27,9 +30,6 @@ def main():
 
     if not args.package:
         sys.exit(parser.print_help(sys.stderr))
-
-    if os.geteuid() != 0:
-        sys.exit('[ERROR] This script must be ran as root. Exiting...')
 
     package = args.package[0]
 
