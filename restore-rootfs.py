@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import atexit
-import argparse
 import os
 import pathlib
 import platform
@@ -11,7 +10,6 @@ import sys
 
 if platform.system() == 'Darwin' and platform.processor() == 'arm64' or platform.processor() == 'arm':
     dpkg_admindir = '/Library/dpkg'
-
 
 def cleanup():
     if os.path.isfile('.tmp/restore-rootfs/.procursus_strapped'):
@@ -26,9 +24,6 @@ if os.geteuid() != 0:
 atexit.register(cleanup)
 
 def main():
-    parser = argparse.ArgumentParser(description='Restore RootFS', usage="./restore-rootfs.py")
-    args = parser.parse_args()
-
     if not os.path.isfile('/.procursus_strapped'):
         sys.exit('[ERROR] This script requires your device to be bootstrapped with the Procursus bootstrap (used in Odyssey & Odysseyra1n). Exiting...')
 
