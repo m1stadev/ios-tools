@@ -32,7 +32,7 @@ atexit.register(cleanup)
 def main():
     parser = argparse.ArgumentParser(description='ASR Fetcher', usage="./asr_fetcher.py -d 'device' [-i 'version']")
     parser.add_argument('-d', '--device', help='Device identifier (ex. iPhone9,3)', nargs=1)
-    parser.add_argument('-i', '--version', help='Fetch ASR binaries for one major iOS version (ex. 13)', nargs=1)
+    parser.add_argument('-i', '--version', help='Fetch ASR binaries for a specific iOS version (ex. 13.5)', nargs=1)
     args = parser.parse_args()
 
     if not args.device:
@@ -71,7 +71,7 @@ def main():
         dmg_sizes = []
         ramdisk_path = f'ramdisk_{device_identifier}_{data["firmwares"][x]["version"]}_{data["firmwares"][x]["buildid"]}.dmg'
         if args.version:
-            if not data['firmwares'][x]['version'].startswith(args.version[0]):
+            if not data['firmwares'][x]['version'] == args.version[0]:
                 continue
 
         try:
@@ -113,6 +113,9 @@ def main():
 
         subprocess.run(('hdiutil', 'detach', 'ramdisk'), stdout=subprocess.DEVNULL)
         os.remove(f'ramdisk_{device_identifier}_{data["firmwares"][x]["version"]}_{data["firmwares"][x]["buildid"]}.dmg')
+
+        if args.version:
+            break
 
     print('Done!')
 
