@@ -67,7 +67,8 @@ def main():
 
 
     print('Getting rid of any leftover jailbreak files in /var...')
-    jailbreak_files = ['/var/lib', '/var/cache', '/var/checkra1n.dmg', '/var/dropbear_rsa_host_key', '/var/mobile/.bash_history', '/var/mobile/.forward', '/var/mobile/.ssh', '/var/root/.ssh', '/var/mobile/Downloads', '/var/binpack']
+
+    jailbreak_files = ['/var/lib', '/var/cache', '/var/checkra1n.dmg', '/var/dropbear_rsa_host_key', '/var/mobile/.bash_history', '/var/mobile/.forward', '/var/mobile/.ssh', '/var/root/.ssh', '/var/mobile/Downloads', '/var/binpack'] # add any jailbreak related files in /var that are left to this list
     for x in jailbreak_files:
         if os.path.isfile(x):
             os.remove(x)
@@ -87,7 +88,17 @@ def main():
     if restore_rootfs.returncode != 0:
         sys.exit('[ERROR] Failed to revert to pre-jailbreak snapshot.')
 
-    print('Successfully restored root-fs. Exiting...')
+    x = input('Successfully restored root-fs. Would you like to reboot now? [Y/N]: ')
+
+    if x.lower() == 'y':
+        print('Rebooting.')
+        subprocess.run(('reboot'), stdout=subprocess.DEVNULL)
+
+    elif x.lower() == 'n':
+        sys.exit('Exiting...')
+
+    else:
+        sys.exit('[ERROR] Invalid answer given. Exiting...')
 
     shutil.rmtree(f'.tmp')     
 
