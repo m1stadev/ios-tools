@@ -1,14 +1,14 @@
+#!/usr/bin/env python3
+
 #Copyright (c) 2020, @mcg29_
 #Code modified by marijuanARM
-
-#!/usr/bin/env python3
 
 import argparse
 import os
 import sys
 
 def main():
-	parser = argparse.ArgumentParser(description="compare-kernels.py - A script to create a diff file between 2 raw kernelcaches that img4lib can utilize.", usage="./compareFiles.py -i kcache.raw -o kcache.patched -d kc.bpatch")
+	parser = argparse.ArgumentParser(description="compare-kernels.py - A script to create a diff file between 2 raw kernelcaches that img4lib can utilize.")
 	parser.add_argument('-i', '--input', help='Input kernelcache', nargs=1)
 	parser.add_argument('-p', '--patched', help='Patched kernelcache', nargs=1)
 	parser.add_argument('-d', '--diff', help='Diff file to write to', nargs=1)
@@ -30,7 +30,6 @@ def main():
 		original = f.read()
 
 	if len(patched) != len(original):
-		print("size does not match, can't compare files! exiting...")
 		sys.exit(f"[ERROR] Input kernel {args.input[0]} and patched kernel {args.patched[0]} are not the same size. Exiting...")
 
 	diff = []
@@ -47,7 +46,7 @@ def main():
 			data = f'{str(x[0])} {(str(x[1]))} {(str(x[2]))}'
 			f.write(f'{data}\n')
 
-	print(f'Patch file written to: {args.diff[0]}. Exiting...')
+	print(f'Diff file written to: {args.diff[0]}. Exiting...')
 
 if __name__ == "__main__":
 	main()
