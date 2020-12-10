@@ -32,7 +32,7 @@ atexit.register(cleanup)
 def main():
     parser = argparse.ArgumentParser(description='ASR Fetcher', usage="./asr_fetcher.py -d 'device' [-i 'version']")
     parser.add_argument('-d', '--device', help='Device identifier (ex. iPhone9,3)', nargs=1)
-    parser.add_argument('-i', '--version', help='Fetch ASR binaries for a specific iOS version (ex. 13.5)', nargs=1)
+    parser.add_argument('-i', '--version', help="Fetch ASR binaries from a single iOS version's IPSW (ex. 13.5)", nargs=1)
     args = parser.parse_args()
 
     if not args.device:
