@@ -32,5 +32,5 @@ A repository with scripts that can be helpful for jailbreaking.
 | `-h` | `--help` | Shows all options avaiable |
 | `-p` | `--package PACKAGE` | Path to installed package |
 
-## [`wiki-proxy.py`](https://github.com/marijuanARM/ios-tools/blob/master/redeb.py)
+## [`wiki-proxy.py`](https://github.com/marijuanARM/ios-tools/blob/master/wiki-proxy.py)
 - A rewrite of [tihmstar](https://twitter.com/tihmstar)'s [wikiproxy.py](https://github.com/tihmstar/libipatcher/blob/master/wikiproxy.py) that utilizes MediaWiki browsing libraries instead of parsing raw HTML documents from The iPhone Wiki with firmware keys.
