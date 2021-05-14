@@ -10,9 +10,9 @@ import subprocess
 import sys
 
 if platform.system() == 'Linux':
-    img4tool_binary = './resources/bin/img4tool_linux'
+    img4tool_binary = os.path.dirname(os.path.abspath(__file__)) + '/resources/bin/img4tool_linux'
 elif platform.system() == 'Darwin':
-    img4tool_binary = './resources/bin/img4tool_macos'
+    img4tool_binary = os.path.dirname(os.path.abspath(__file__)) + '/resources/bin/img4tool_macos'
 else:
     sys.exit('[ERROR] Unsupported OS. Exiting...')
 
