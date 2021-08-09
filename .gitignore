@@ -1,3 +1,4 @@
 *.tmp
+*.pyc
 ASR_Binaries/
 .tmp/
