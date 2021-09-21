@@ -52,7 +52,7 @@ class Wiki(object):
         wiki_keys = self.parse_page()
         keys = []
         rsp = {}
-        if self.boardconfig == '' and self.device.lower().endswith(('iphone8,1', 'iphone8,4')):
+        if self.boardconfig == '' and self.device.lower().endswith(('iphone8,1', 'iphone8,4', 'iphone8,2')):
             return None
 
         rsp['identifier'] = wiki_keys['device']
@@ -83,10 +83,10 @@ class Wiki(object):
             if x.endswith(('key', 'iv', 'kbag', 'model', 'model2')):
                 continue
 
-            if self.boardconfig.lower().endswith(('n71map', 'n69uap')) and x.endswith(('devicetree', 'ibec', 'ibss', 'iboot', 'llb', 'sepfirmware')):
+            if self.boardconfig.lower().endswith(('n71map', 'n69uap', 'n66map')) and x.endswith(('devicetree', 'ibec', 'ibss', 'iboot', 'llb', 'sepfirmware')):
                 continue
 
-            if self.boardconfig.lower().endswith(('n71ap', 'n69ap')) and x.endswith(('devicetree2', 'ibec2', 'ibss2', 'iboot2', 'llb2', 'sepfirmware2')):
+            if self.boardconfig.lower().endswith(('n71ap', 'n69ap', 'n66ap')) and x.endswith(('devicetree2', 'ibec2', 'ibss2', 'iboot2', 'llb2', 'sepfirmware2')):
                 continue
 
             if wiki_keys[x].startswith('0'):
