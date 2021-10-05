@@ -76,8 +76,8 @@ class Wiki(object):
             del wiki_keys['baseband']
                 
         for x in wiki_keys:
-            uppercase_component_names = ['RootFS', 'Update Ramdisk', 'Restore Ramdisk', 'AOPFirmware', 'AppleLogo', 'Apple Maggie Firmware Image', 'AudioCodecFirmware', 'BatteryCharging0', 'BatteryCharging1', 'BatteryFull', 'BatteryLow0', 'BatteryLow1', 'DeviceTree', 'DeviceTree2', 'GlyphPlugin', 'Homer', 'iBEC', 'iBEC2', 'iBoot', 'iBoot2', 'iBSS', 'iBSS2', 'ISP', 'Kernelcache', 'LiquidDetect', 'LLB', 'LLB2', 'Multitouch', 'RecoveryMode', 'SEP-Firmware', 'SEP-Firmware2']
-            lowercase_component_names = ['rootfs', 'updateramdisk', 'restoreramdisk', 'aopfirmware', 'applelogo', 'applemaggie', 'audiocodecfirmware', 'batterycharging0', 'batterycharging1', 'batteryfull', 'batterylow0', 'batterylow1', 'devicetree', 'devicetree2', 'glyphplugin', 'homer', 'ibec', 'ibec2', 'iboot', 'iboot2', 'ibss', 'ibss2', 'isp', 'kernelcache', 'liquiddetect', 'llb', 'llb2', 'multitouch', 'recoverymode', 'sepfirmware', 'sepfirmware2']
+            uppercase_component_names = ['RootFS', 'Update Ramdisk', 'Restore Ramdisk', 'AOPFirmware', 'AppleLogo', 'Apple Maggie Firmware Image', 'AudioCodecFirmware', 'BatteryCharging0', 'BatteryCharging1', 'BatteryFull', 'BatteryLow0', 'BatteryLow1', 'DeviceTree', 'DeviceTree2', 'GlyphPlugin', 'Homer', 'iBEC', 'iBEC2', 'iBoot', 'iBoot2', 'iBSS', 'iBSS2', 'ISP', 'Kernelcache', 'LiquidDetect', 'LLB', 'LLB2', 'Multitouch', 'RecoveryMode', 'SEP-Firmware', 'SEP-Firmware2', 'AVE', 'RestoreAVE', 'RestoreISP']
+            lowercase_component_names = ['rootfs', 'updateramdisk', 'restoreramdisk', 'aopfirmware', 'applelogo', 'applemaggie', 'audiocodecfirmware', 'batterycharging0', 'batterycharging1', 'batteryfull', 'batterylow0', 'batterylow1', 'devicetree', 'devicetree2', 'glyphplugin', 'homer', 'ibec', 'ibec2', 'iboot', 'iboot2', 'ibss', 'ibss2', 'isp', 'kernelcache', 'liquiddetect', 'llb', 'llb2', 'multitouch', 'recoverymode', 'sepfirmware', 'sepfirmware2', 'ave', 'restoreave', 'restoreisp']
             key = {}
 
             if x.endswith(('key', 'iv', 'kbag', 'model', 'model2')):
