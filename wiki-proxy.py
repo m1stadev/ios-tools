@@ -1,121 +1,152 @@
 #!/usr/bin/env python3
 
-from flask import Flask
-import datetime
-import json
-import mwclient
-import requests
+from datetime import datetime
+from flask import Flask, Response
+from mwclient import Site as WikiSite
+from wikitextparser import parse as wikiparse
 
-class Wiki(object):
-    def __init__(self, device, buildid):
-        super().__init__()
+import json
+
+
+class Wiki:
+    def __init__(self, device: str, buildid: str) -> None:
+        self.site = WikiSite('www.theiphonewiki.com')
 
         self.device = device
         self.buildid = buildid
 
-        self.site = mwclient.Site('www.theiphonewiki.com')
-        self.page_name = self.get_keypage()
-        self.keys = self.get_keys()
+    def get_firm_page(self) -> str:
+        results = list(self.site.search(f'{self.buildid} ({self.device})'))
+        if len(results) == 0:
+            raise ValueError(f'No Firmware Keys page for device: {self.device}, buildid: {self.buildid}.')
 
-    def get_keypage(self):
-        for result in self.site.search(f'{self.buildid} {self.device}'):
-            page = self.site.pages[result['title']]
-            if page.exists:
-                return result.get('title').replace(' ', '_')
+        return self.site.pages[results[0]['title']].text()
 
-            sys.exit(f'[ERROR] No keys exist for device: {self.device}, buildid: {buildid}. Exiting...')
+    def parse_page(self, page: str) -> dict:
+        page = ' '.join([x for x in page.split(' ') if x != '']).replace('{{', '{| class="wikitable"').replace('}}', '|}') # Have to coerce wikitextparser into recognizing it as a table for easy parsing
+        page_data = dict()
+        for entry in wikiparse(page).tables[0].data()[0]:
+            key, item = entry.split(' = ')
+            page_data[key] = item
 
-    def parse_page(self):
-        self.page = self.site.pages[self.page_name]
-        wikikeys = {}
+        return page_data
 
-        data = self.page.text().replace(' ', '').replace('|', '').splitlines()
-        wiki_version = self.page.text().replace('|', '').splitlines()[1].split('=')[1][1:].replace('[Golden MasterGM]', '[Golden Master|GM]')
-        for x in data:
-            if x == '' or x == '}}' or x == '{{keys':
-                data.pop(data.index(x))
+    def get_keys(self, page: str) -> str:
+        page_data = self.parse_page(page)
+        response = {
+            'identifier': page_data['Device'],
+            'buildid': page_data['Build'],
+            'codename': page_data['Codename'],
+            'restoreramdiskexists': 'RestoreRamdisk' in page_data.keys(),
+            'updateramdiskexists': 'UpdateRamdisk' in page_data.keys(),
+            'keys': list()
+        }
+
+        for component in page_data.keys():
+            if not any(x == component for x in ('iBSS', 'iBEC', 'iBoot', 'LLB', 'SEPFirmware')):
                 continue
 
-        for x in data:
-            new_str = x.split('=')
-            try:
-                wikikeys[new_str[0].lower()] = new_str[1]
-            except IndexError:
+            if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
                 continue
 
-        wikikeys['version'] = wiki_version
+            image = {
+                'image': component,
+                'filename': page_data[component],
+                'date': datetime.datetime.now().isoformat()
+            }
 
-        return wikikeys
+            for key in ('IV', 'Key'):
+                if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
+                    continue
 
-    def get_keys(self):
-        wiki_keys = self.parse_page()
-        keys = []
-        rsp = {}
+                image[key.lower()] = page_data[component + key]
 
-        rsp['identifier'] = wiki_keys['device']
-        rsp['buildid'] = wiki_keys['build']
-        rsp['codename'] = wiki_keys['codename']
-
-        if 'restoreramdisk' in wiki_keys:
-            rsp['restoreramdiskexists'] = True
-        else:
-            rsp['restoreramdiskexists'] = False
-
-        if 'updateramdisk' in wiki_keys:
-            rsp['updateramdiskexists'] = True
-        else:
-            rsp['updateramdiskexists'] = False
-                
-        for x in ['version', 'device', 'build', 'codename', 'downloadurl']:
-            del wiki_keys[x]
-
-        if 'baseband' in wiki_keys:
-            del wiki_keys['baseband']
-                
-        for x in wiki_keys:
-            uppercase_component_names = ['RootFS', 'Update Ramdisk', 'Restore Ramdisk', 'AOPFirmware', 'AppleLogo', 'Apple Maggie Firmware Image', 'AudioCodecFirmware', 'BatteryCharging0', 'BatteryCharging1', 'BatteryFull', 'BatteryLow0', 'BatteryLow1', 'DeviceTree', 'GlyphPlugin', 'Homer', 'iBEC', 'iBoot', 'iBSS', 'ISP', 'Kernelcache', 'LiquidDetect', 'LLB', 'Multitouch', 'RecoveryMode', 'SEP-Firmware']
-            lowercase_component_names = ['rootfs', 'updateramdisk', 'restoreramdisk', 'aopfirmware', 'applelogo', 'applemaggie', 'audiocodecfirmware', 'batterycharging0', 'batterycharging1', 'batteryfull', 'batterylow0', 'batterylow1', 'devicetree', 'glyphplugin', 'homer', 'ibec', 'iboot', 'ibss', 'isp', 'kernelcache', 'liquiddetect', 'llb', 'multitouch', 'recoverymode', 'sepfirmware']
-            key = {}
-
-            if x.endswith(('key', 'iv', 'kbag')):
+            if 'iv' and 'key' not in image.keys():
                 continue
 
-            if wiki_keys[x].startswith('0'):
-                filename = f'{wiki_keys[x]}.dmg'
-            else:
-                filename = wiki_keys[x]
-            
-            key["image"] = uppercase_component_names[lowercase_component_names.index(x)]
-            key["filename"] = filename #WARNING This is the wrong format! (usually this would be full path instead of just the filename)
-            key["date"] = datetime.datetime.now().isoformat()
+            image['kbag'] = image['iv'] + image['key']
+            response['keys'].append(image)
 
-            non_keys = ['Unknown', 'NotEncrypted']
+        return json.dumps(response)
 
-            if f'{x}iv' in wiki_keys and wiki_keys[f'{x}iv'] not in non_keys:
-                key["iv"] = wiki_keys[f'{x}iv']
-            else:
-                key["iv"] = ''
-            if f'{x}key' in wiki_keys and wiki_keys[f'{x}key'] not in non_keys:
-                key["key"] = wiki_keys[f'{x}key']
-            else:
-                key["key"] = ''
-            
-            if key["key"] == '' or key['iv'] == '':
-                key["kbag"] = ''
-            else:
-                key["kbag"] = key["iv"] + key["key"]
+    def get_keys_a9(self, page: str, boardconfig: str) -> str:
+        page_data = self.parse_page(page)
 
-            keys.append(key)
-        rsp["keys"] = keys
-        return json.dumps(rsp)
-        
-app = Flask(__name__)
+        if 'Model' and 'Model2' not in page_data.keys():
+            raise ValueError(f'Device: {self.device} (boardconfig: {boardconfig}) is not A9!')
 
-@app.route("/firmware/<device>/<buildid>")
-def keys(device, buildid):
-    print(f'Getting keys for device: {device}, buildid: {buildid}')
+        response = {
+            'identifier': page_data['Device'],
+            'buildid': page_data['Build'],
+            'codename': page_data['Codename'],
+            'restoreramdiskexists': 'RestoreRamdisk' in page_data.keys(),
+            'updateramdiskexists': 'UpdateRamdisk' in page_data.keys(),
+            'keys': list()
+        }
+
+        if boardconfig.lower() not in [x.lower() for x in page_data.values()]:
+            raise ValueError(f'Boardconfig: {boardconfig} for device: {self.device} is not valid!')
+
+        if page_data['Model2'].lower() == boardconfig.lower():
+            for key in page_data.keys():
+                if '2' in key:
+                    page_data[key.replace('2', '')] = page_data[key]
+
+        for component in page_data.keys():
+            if '2' in component:
+                continue
+
+            if not any(x == component for x in ('iBSS', 'iBEC', 'iBoot', 'LLB', 'SEPFirmware')):
+                continue
+
+            if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
+                continue
+
+            image = {
+                'image': component,
+                'filename': page_data[component],
+                'date': datetime.now().isoformat()
+            }
+
+            for key in ('IV', 'Key'):
+                if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
+                    continue
+
+                image[key.lower()] = page_data[component + key]
+
+            if 'iv' and 'key' not in image.keys():
+                continue
+
+            image['kbag'] = image['iv'] + image['key']
+            response['keys'].append(image)
+
+        return json.dumps(response)
+
+
+app = Flask('WikiProxy API')
+
+@app.route('/firmware/<device>/<buildid>', methods=['GET'])
+def keys(device: str, buildid: str) -> Response:
+    print(f'Getting firmware keys for device: {device}, buildid: {buildid}')
     iphonewiki = Wiki(device, buildid)
-    return iphonewiki.keys
+    try:
+        page = iphonewiki.get_firm_page()
+        keys = iphonewiki.get_keys(page)
+        return app.response_class(response=keys, mimetype='application/json')
+    except:
+        return app.response_class(status=404)
 
-if __name__ == "__main__":
+@app.route('/firmware/<device>/<boardconfig>/<buildid>', methods=['GET'])
+def keys_a9(device: str, boardconfig: str, buildid: str) -> Response:
+    print(f'Getting firmware keys for device: {device} (boardconfig: {boardconfig}), buildid: {buildid}')
+    iphonewiki = Wiki(device, buildid)
+    try:
+        page = iphonewiki.get_firm_page()
+        keys = iphonewiki.get_keys_a9(page, boardconfig)
+        return app.response_class(response=keys, mimetype='application/json')
+    except:
+        return app.response_class(status=404)
+
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888)
