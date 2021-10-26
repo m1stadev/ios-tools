@@ -52,7 +52,7 @@ class Wiki:
             image = {
                 'image': component,
                 'filename': page_data[component],
-                'date': datetime.datetime.now().isoformat()
+                'date': datetime.now().isoformat()
             }
 
             for key in ('IV', 'Key'):
