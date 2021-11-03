@@ -43,7 +43,7 @@ class Wiki:
         }
 
         for component in page_data.keys():
-            if not any(x == component for x in ('iBSS', 'iBEC', 'iBoot', 'LLB', 'SEPFirmware')):
+            if any(x == component for x in ('Version', 'Build', 'Device', 'Codename', 'Baseband', 'DownloadURL')):
                 continue
 
             if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
@@ -55,13 +55,16 @@ class Wiki:
                 'date': datetime.now().isoformat()
             }
 
-            for key in ('IV', 'Key'):
+            for key in ('IV', 'Key') if component != 'RootFS' else ('Key',):
                 if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
                     continue
 
                 image[key.lower()] = page_data[component + key]
 
-            if 'iv' and 'key' not in image.keys():
+            if 'key' not in image.keys():
+                continue
+
+            if 'iv' not in image.keys() and component != 'RootFS':
                 continue
 
             image['kbag'] = image['iv'] + image['key']
@@ -96,7 +99,7 @@ class Wiki:
             if '2' in component:
                 continue
 
-            if not any(x == component for x in ('iBSS', 'iBEC', 'iBoot', 'LLB', 'SEPFirmware')):
+            if any(x == component for x in ('Version', 'Build', 'Device', 'Codename', 'Baseband', 'DownloadURL')):
                 continue
 
             if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
@@ -108,13 +111,16 @@ class Wiki:
                 'date': datetime.now().isoformat()
             }
 
-            for key in ('IV', 'Key'):
+            for key in ('IV', 'Key') if component != 'RootFS' else ('Key',):
                 if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
                     continue
 
                 image[key.lower()] = page_data[component + key]
 
-            if 'iv' and 'key' not in image.keys():
+            if 'key' not in image.keys():
+                continue
+
+            if 'iv' not in image.keys() and component != 'RootFS':
                 continue
 
             image['kbag'] = image['iv'] + image['key']
@@ -123,7 +129,7 @@ class Wiki:
         return json.dumps(response)
 
 
-app = Flask('WikiProxy API')
+app = Flask('Wikiproxy API')
 
 @app.route('/firmware/<device>/<buildid>', methods=['GET'])
 def keys(device: str, buildid: str) -> Response:
@@ -149,4 +155,4 @@ def keys_a9(device: str, boardconfig: str, buildid: str) -> Response:
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8888)
+    app.run(port=8888)
