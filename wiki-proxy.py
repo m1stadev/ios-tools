@@ -31,8 +31,8 @@ class Wiki:
             page_data[key] = item
 
         if self.board is not None:
-            if 'Model' and 'Model2' not in page_data.keys():
-                raise ValueError(f'Device: {self.device} (boardconfig: {self.board}) is not A9!')
+            if ('Model' not in page_data.keys()) and ('Model2' not in page_data.keys()):
+                return page_data
 
             if self.board.lower() not in [x.lower() for x in page_data.values()]:
                 raise ValueError(f'Boardconfig: {self.board} for device: {self.device} is not valid!')
