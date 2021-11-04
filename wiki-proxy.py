@@ -9,11 +9,12 @@ import json
 
 
 class Wiki:
-    def __init__(self, device: str, buildid: str) -> None:
+    def __init__(self, device: str, buildid: str, *, boardconfig: str=None) -> None:
         self.site = WikiSite('www.theiphonewiki.com')
 
         self.device = device
         self.buildid = buildid
+        self.board = boardconfig
 
     def get_firm_page(self) -> str:
         results = list(self.site.search(f'{self.buildid} ({self.device})'))
@@ -29,6 +30,22 @@ class Wiki:
             key, item = entry.split(' = ')
             page_data[key] = item
 
+        if self.board is not None:
+            if 'Model' and 'Model2' not in page_data.keys():
+                raise ValueError(f'Device: {self.device} (boardconfig: {self.board}) is not A9!')
+
+            if self.board.lower() not in [x.lower() for x in page_data.values()]:
+                raise ValueError(f'Boardconfig: {self.board} for device: {self.device} is not valid!')
+
+            if page_data['Model2'].lower() == self.board.lower():
+                for key in page_data.keys():
+                    if '2' in key:
+                        page_data[key.replace('2', '')] = page_data[key]
+
+            for key in list(page_data.keys()):
+                if '2' in key:
+                    del page_data[key]
+
         return page_data
 
     def get_keys(self, page: str) -> str:
@@ -43,7 +60,7 @@ class Wiki:
         }
 
         for component in page_data.keys():
-            if any(x == component for x in ('Version', 'Build', 'Device', 'Codename', 'Baseband', 'DownloadURL')):
+            if any(x == component for x in ('Version', 'Build', 'Device', 'Model', 'Codename', 'Baseband', 'DownloadURL')):
                 continue
 
             if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
@@ -55,75 +72,25 @@ class Wiki:
                 'date': datetime.now().isoformat()
             }
 
+            if any(component == x for x in ('RootFS', 'RestoreRamdisk', 'UpdateRamdisk')):
+                image['filename'] += '.dmg'
+
             for key in ('IV', 'Key') if component != 'RootFS' else ('Key',):
+                if component + key not in page_data.keys():
+                    continue
+
                 if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
                     continue
 
                 image[key.lower()] = page_data[component + key]
 
-            if 'key' not in image.keys():
-                continue
-
-            if 'iv' not in image.keys() and component != 'RootFS':
-                continue
-
-            image['kbag'] = image['iv'] + image['key']
-            response['keys'].append(image)
-
-        return json.dumps(response)
-
-    def get_keys_a9(self, page: str, boardconfig: str) -> str:
-        page_data = self.parse_page(page)
-
-        if 'Model' and 'Model2' not in page_data.keys():
-            raise ValueError(f'Device: {self.device} (boardconfig: {boardconfig}) is not A9!')
-
-        response = {
-            'identifier': page_data['Device'],
-            'buildid': page_data['Build'],
-            'codename': page_data['Codename'],
-            'restoreramdiskexists': 'RestoreRamdisk' in page_data.keys(),
-            'updateramdiskexists': 'UpdateRamdisk' in page_data.keys(),
-            'keys': list()
-        }
-
-        if boardconfig.lower() not in [x.lower() for x in page_data.values()]:
-            raise ValueError(f'Boardconfig: {boardconfig} for device: {self.device} is not valid!')
-
-        if page_data['Model2'].lower() == boardconfig.lower():
-            for key in page_data.keys():
-                if '2' in key:
-                    page_data[key.replace('2', '')] = page_data[key]
-
-        for component in page_data.keys():
-            if '2' in component:
-                continue
-
-            if any(x == component for x in ('Version', 'Build', 'Device', 'Codename', 'Baseband', 'DownloadURL')):
-                continue
-
-            if any(component.endswith(x) for x in ('Key', 'IV', 'KBAG')):
-                continue
-
-            image = {
-                'image': component,
-                'filename': page_data[component],
-                'date': datetime.now().isoformat()
-            }
-
-            for key in ('IV', 'Key') if component != 'RootFS' else ('Key',):
-                if any(x in page_data[component + key] for x in ('Unknown', 'Not Encrypted')):
+            if ('iv' not in image.keys()) and ('key' not in image.keys()):
+                if not image['filename'].endswith('.dmg'):
                     continue
 
-                image[key.lower()] = page_data[component + key]
-
-            if 'key' not in image.keys():
-                continue
-
-            if 'iv' not in image.keys() and component != 'RootFS':
-                continue
-
-            image['kbag'] = image['iv'] + image['key']
+            if ('iv' in image.keys()) and ('key' in image.keys()):
+                image['kbag'] = image['iv'] + image['key']
+                
             response['keys'].append(image)
 
         return json.dumps(response)
@@ -145,10 +112,10 @@ def keys(device: str, buildid: str) -> Response:
 @app.route('/firmware/<device>/<boardconfig>/<buildid>', methods=['GET'])
 def keys_a9(device: str, boardconfig: str, buildid: str) -> Response:
     print(f'Getting firmware keys for device: {device} (boardconfig: {boardconfig}), buildid: {buildid}')
-    iphonewiki = Wiki(device, buildid)
+    iphonewiki = Wiki(device, buildid, boardconfig=boardconfig)
     try:
         page = iphonewiki.get_firm_page()
-        keys = iphonewiki.get_keys_a9(page, boardconfig)
+        keys = iphonewiki.get_keys(page)
         return app.response_class(response=keys, mimetype='application/json')
     except:
         return app.response_class(status=404)
